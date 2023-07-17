@@ -117,28 +117,107 @@ const coworkings = require('./mock-coworkings');
 const app = express();
 const port = 3000;
 
+///
+
+
+
+//le type de données :
+app.use(express.json())
+
+//////
+
+app.get("/api/coworkings/:id", (req, res) => {
+    let targetCoworking = coworkings.find(el => el.id === parseInt(req.params.id))
+    if (targetCoworking) {
+        return res.json({ message: `L'élément ayant pour id : ${targetCoworking.id} a bien été récupéré`, data: targetCoworking })
+    } else {
+
+        return res.json({ message: `L'élément ayant pour id ${req.params.id} n'a pas pu être récupéré.` })
+    }
+});
+
 app.get("/api/coworkings", (req, res) => {
     let { criterium, orderBy } = req.query;
     criterium = criterium || 'superficy';
     orderBy = orderBy || 'ASC';
 
-    let sortedCoworkings = coworkings.slice();
+    const nosort = req.query.nosort
+    const arrTsort = [...coworkings];
 
-    if (criterium === 'superficy') {
-        sortedCoworkings.sort((a, b) => {
-            if (orderBy === 'ASC') {
-                return a.superficy - b.superficy;
-            } else {
-                return b.superficy - a.superficy;
-            }
-        });
-    }
 
-    res.json(sortedCoworkings);
+    res.json(arrTsort);
 });
+
+/////
+
+// app.put('/api/coworkings/:id', (req, res) => {
+
+//     const indexInArray = { ...coworkings[indexInArray], ...req.body }
+//     coworkings[indexInArray] = updatedCoworking;
+
+
+//     return res.json({
+//         message: `Le  Coworking ${updateCoworking.name} a été modifié.`,
+//         data: updatedCoworking
+//     })
+
+// })
+
+
+////UPDATE//////
+app.put('/api/coworkings/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const indexInArray = coworkings.findIndex((element) => element.id === id);
+
+    if (indexInArray !== -1) {
+        let updatedCoworking = { ...coworkings[indexInArray], ...req.body };
+        coworkings[indexInArray] = updatedCoworking;
+
+        return res.json({ message: `Le coworking ${updatedCoworking.name} a été modifié`, data: updatedCoworking });
+    } else {
+        return res.status(404).json({ message: "Coworking non trouvé" });
+    }
+});
+
+
+
+///DELETE///
+
+app.delete('/api/coworkings/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const indexInArray = coworkings.findIndex((element) => element.id === id);
+
+    if (indexInArray !== -1) {
+        const deletedCoworking = coworkings.splice(indexInArray, 1);
+        return res.json({ message: `Le coworking ${deletedCoworking[0].name} a été supprimé.`, data: deletedCoworking });
+    } else {
+        return res.json({ message: `Element non trouvée.` })
+    }
+});
+
+///
+
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
+
+app.post("/api/coworkings", (req, res) => {
+    const newId = coworkings[coworkings.length - 1].id + 1;
+    const newCoworking = { id: newId, ...req.body };
+    coworkings.push(newCoworking);
+    return res.json({
+        message: `Un nouveau coworking n° ${newCoworking.id} a été créé.`, data: newCoworking
+    });
+});
+
+
+
+
+//LIEN:
+
+//http://localhost:3000/api/coworkings?criterium=capacity&orderBy=DESC
+
+
 
 
